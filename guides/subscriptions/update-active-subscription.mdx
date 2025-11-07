@@ -1,9 +1,7 @@
 ---
 title: "Update an Active Subscription"
-The paymenttoken can be updated to allow the customer to change the card-on-file and updatepay..."
 ---
 
-Update an Active Subscription[](#update-an-active-subscription)
 The `payment_token` can be updated to allow the customer to change the card-on-file and [`update_payment_token`](/reference/update-payment-token) should be called any time the items being delivered in the subscription change. For example, if the customer is subscribed to a monthly B12 supplement and chooses to add a Magnesium supplement at a later date, **the update method MUST be called** to ensure they still qualify to use FSA/HSA funds for the additional items. If not, the call to `create_payment_session` can fail due to ineligibility.
 
 When you invoke [`update_payment_token`](/reference/update-payment-token), a `next_action` enum may be returned indicating an action a customer must take before the `payment_token` is valid for further charges. The `redirect_url` indicates where the customer should be sent to update the token. If these fields are present in the response, ensure the customer is clearly informed of the pending action required and how to resolve it - either by updating their payment method, or retaking the survey (as indicated by the enum value in `next_action`).

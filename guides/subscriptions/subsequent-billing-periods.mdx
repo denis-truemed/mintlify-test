@@ -2,15 +2,18 @@
 title: "Subsequent Billing Periods"
 ---
 
-For subsequent billing periods, `payment_session`s can be created via the `create_payment_session` endpoint by providing the `payment_token` in the call. The user doesn’t need to be present as their on-file payment method will be charged.
+For subsequent billing periods, `payment_session`s can be created via the `create_payment_session` endpoint by providing the `payment_token` in the call. The user doesn't need to be present as their on-file payment method will be charged.
 
 As above, orders should not be fulfilled until the `payment_session_complete` webhook has been received with a `status` of `captured`.
+
+## Avoiding Failures
 
 To avoid failures due to payment method expiration or subscription-modifications (such as changing items in the subscription) no longer being eligible, leverage the `update_payment_token` endpoint in a subscription-management user-portal when updating items in the cart. These flows are outlined below.
 
 Failure scenarios should be communicated to the customer via email and addressed as outlined in below. These are best avoided by storing the LMN expiration date and CC expiration dates and prompting the user to update their payment method or take another health survey to re-qualify prior to getting the exception at time of billing.
 
-Failure to Charge[](#failure-to-charge)
+## Failure to Charge
+
 Outside of the user failing to qualify, there are several classes of failures that can occur when creating subsequent changes for a subscription.
 
 1. The user needs to update their card information
