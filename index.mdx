@@ -1,97 +1,75 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Truemed Developer Documentation"
+description: "Integration guides and API reference for Truemed payment processing"
 ---
 
-## Setting up
+## Welcome to Truemed
 
-Get your documentation site up and running in minutes.
+Truemed enables HSA/FSA payment processing for health and wellness merchants. This documentation will help you integrate Truemed into your checkout flow and manage subscriptions.
+
+## Getting Started
+
+<CardGroup cols={2}>
+  <Card
+    title="Stripe Integration"
+    icon="stripe"
+    href="/guides/implementation/stripe-payment-method"
+  >
+    Integrate Truemed as a Stripe Custom Payment Method
+  </Card>
+  <Card
+    title="iFrame Integration"
+    icon="window"
+    href="/guides/implementation/iframe-payment-session"
+  >
+    Embed Truemed checkout using an iFrame
+  </Card>
+</CardGroup>
+
+## Subscriptions
 
 <Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
+  title="Subscription Management"
+  icon="repeat"
+  href="/guides/subscriptions/overview"
   horizontal
 >
-  Follow our three step quickstart guide.
+  Learn how to use Truemed for recurring billing and subscription management
 </Card>
 
-## Make it yours
+## API Reference
 
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
+<CardGroup cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
+    title="Payment Sessions"
+    icon="credit-card"
     href="/api-reference/introduction"
   >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+    Create and manage one-time payments
   </Card>
   <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
+    title="Payment Tokens"
+    icon="key"
+    href="/api-reference/introduction"
   >
-    Add sample code to demonstrate how to use your product.
+    Store payment methods for subscriptions
   </Card>
   <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
+    title="Qualification Sessions"
+    icon="circle-check"
+    href="/api-reference/introduction"
   >
-    Display images and other media.
+    Verify HSA/FSA eligibility
   </Card>
   <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
+    title="Webhooks"
+    icon="webhook"
+    href="/api-reference/introduction"
   >
-    Write once and reuse across your docs.
+    Receive real-time payment notifications
   </Card>
-</Columns>
+</CardGroup>
 
-## Need inspiration?
+## Support
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+Need help? Contact our integration team at [support@truemed.com](mailto:support@truemed.com)
