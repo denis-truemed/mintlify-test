@@ -1,33 +1,52 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'API Introduction'
+description: 'Truemed Merchant Integration API for payment processing and qualification management'
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Welcome to the Truemed API
 
-## Welcome
+The Truemed Merchant Integration API enables payment processing and qualification management for HSA/FSA transactions. This API allows merchants to integrate Truemed's payment solutions into their checkout flows.
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+## Base URLs
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+The API is available across three environments:
+
+- **Production**: `https://api.truemed.com`
+- **Staging**: `https://staging-api.truemed.com`
+- **Development**: `https://dev-api.truemed.com`
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All API endpoints are authenticated using API keys sent in the request header:
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+```bash
+x-truemed-api-key: your_api_key_here
 ```
+
+There are two types of API keys:
+
+1. **REST API Key** (`truemed-api-key-rest`): Used for server-to-server authentication when calling Truemed endpoints
+2. **Webhook API Key** (`truemed-api-key-webhook`): Used by Truemed to authenticate webhook requests to your endpoints
+
+## API Sections
+
+### Payment Sessions
+Create and manage payment sessions for one-time payments and authorizations. Includes support for manual capture, void, cancel, and refund operations.
+
+### Payment Tokens
+Manage stored payment methods and subscription billing through tokenized payment methods.
+
+### Qualification Sessions
+Determine customer eligibility for HSA/FSA spending through qualification sessions and Letter of Medical Necessity (LMN) verification.
+
+### Webhooks
+Receive real-time notifications about payment status changes, token updates, and qualification results.
+
+## Getting Started
+
+To begin integrating with Truemed:
+
+1. Obtain your API key from the Truemed dashboard
+2. Choose your environment (development, staging, or production)
+3. Start with the [Create Payment Session](/api-reference/POST%20/payments/v1/create_payment_session) endpoint
+4. Implement webhook handlers for status updates

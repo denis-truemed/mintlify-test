@@ -1,0 +1,22 @@
+---
+title: "Update an Active Subscription"
+description: "Update an Active Subscription[](update-an-active-subscription)
+The paymenttoken can be updated to allow the customer to change the card-on-file and updatepay..."
+---
+
+Update an Active Subscription[](#update-an-active-subscription)
+The `payment_token` can be updated to allow the customer to change the card-on-file and [`update_payment_token`](/reference/update-payment-token) should be called any time the items being delivered in the subscription change. For example, if the customer is subscribed to a monthly B12 supplement and chooses to add a Magnesium supplement at a later date, **the update method MUST be called** to ensure they still qualify to use FSA/HSA funds for the additional items. If not, the call to `create_payment_session` can fail due to ineligibility.
+
+When you invoke [`update_payment_token`](/reference/update-payment-token), a `next_action` enum may be returned indicating an action a customer must take before the `payment_token` is valid for further charges. The `redirect_url` indicates where the customer should be sent to update the token. If these fields are present in the response, ensure the customer is clearly informed of the pending action required and how to resolve it - either by updating their payment method, or retaking the survey (as indicated by the enum value in `next_action`).
+
+## Updating Payment Method
+
+Invoking [`update_payment_token`](/reference/update-payment-token) with `update_card_info=True` will ensure the customer can update their stored payment method. The `next_action` in the response will be `UpdatePaymentMethod` and the `redirect_url` will be a page where the customer can change their stored payment method information.
+
+In a subscription-dashboard, the user should be presented with a button (”Updated Stored Payment Methods” or similar) that triggers a call on to this endpoint on the partner backend.
+
+## Update Items in a Subscription
+
+Invoking `update_payment_token` with different `order_items` than were used to create the `payment_token` may or may not trigger a `next_action` of `TakeHealthSurvey` depending on a variety of factors that may change over time. In general, partners should invoke this endpoint any time the user updates the items in their subscription and only confirm the changes if `next_action=None` in the response. Otherwise, the change should be marked as pending.
+
+When changing the order items `update_payment_token` cannot also be set to `True`.

@@ -1,0 +1,10 @@
+---
+title: "Subscription Management"
+description: "User-Portal / Subscription Dashboard[](user-portal--subscription-dashboard)
+Partners can present information about the subscription such as the last4 of the ..."
+---
+
+User-Portal / Subscription Dashboard[](#user-portal--subscription-dashboard)
+Partners can present information about the subscription such as the `last_4` of the card on file along with the `lmn_expiration` and `card_expiration` dates. The user should be prompted to update their payment or tele-health survey when either of these dates are near to avoid subsequent charge failures via a call to our [`update_payment_token`](/reference/update-payment-token) API as outlined below.
+
+The [`list_payment_sessions`](/reference/list-payment-sessions) endpoint can be invoked with a `payment_token=${customer's token}` filter to show the customer all of the orders / payment sessions associated with their Truemed `payment_token` (subscription).

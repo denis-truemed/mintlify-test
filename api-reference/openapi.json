@@ -1,72 +1,212 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
+    "title": "Truemed Merchant Integration API v1",
+    "description": "Truemed integration API for payment processing and qualification management.",
+    "contact": {
+      "name": "API Support",
+      "email": "api-support@truemed.com"
+    },
     "license": {
-      "name": "MIT"
+      "name": "Proprietary",
+      "url": "https://truemed.com/terms"
     },
     "version": "1.0.0"
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
-    }
-  ],
-  "security": [
+      "url": "https://dev-api.truemed.com",
+      "description": "Development server"
+    },
     {
-      "bearerAuth": []
+      "url": "https://staging-api.truemed.com",
+      "description": "Staging server"
+    },
+    {
+      "url": "https://api.truemed.com",
+      "description": "Production server"
     }
   ],
   "paths": {
-    "/plants": {
+    "/api/v1/payment_tokens": {
       "get": {
-        "description": "Returns all plants from the system that the user has access to",
+        "tags": [
+          "Payment Tokens"
+        ],
+        "summary": "List payment tokens",
+        "description": "List all `payment_token`'s created with the `create_payment_token` and `create_payment_session` endpoints.",
         "parameters": [
           {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
+            "description": "Optional field indicating which page to access. Defaults to 1.",
+            "required": false,
+            "deprecated": false,
             "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
+              "type": "integer"
+            },
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "description": "Optional field indicating the number of records per page. Defaults to 30.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "integer"
+            },
+            "name": "page_size",
+            "in": "query"
+          },
+          {
+            "description": "The email to search for. Partial matches supported, using 'includes' semantics.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "email",
+            "in": "query"
+          },
+          {
+            "description": "The name to search for. Partial matches supported, using 'includes' semantics.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "name",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment tokens with cards expiring on or before this month (YYYY-MM format, e.g., '2024-06')",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "card_expires_before",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment tokens with lmns expiring on or before this month (YYYY-MM-DD) format, e.g., '2024-06-15')",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "name": "lmn_expires_before",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
-                  }
+                  "$ref": "#/components/schemas/PaymentTokenListResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Unexpected error",
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Page not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Page not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
                 }
               }
             }
           }
-        }
-      },
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payment_tokens/create": {
       "post": {
-        "description": "Creates a new plant in the store",
+        "tags": [
+          "Payment Tokens"
+        ],
+        "summary": "Create payment token",
+        "description": "Payment tokens can be created outside of the create_payment_session API call. This is most commonly used to support existing subscription customers, allowing them to move their subscriptions to their HSA/FSA. Use create_payment_session with tokenize=True to create a subscription as part of a checkout flow, such as the first order in a subscription, or free trials.",
         "requestBody": {
-          "description": "Plant to add to the store",
+          "description": "Request body for CreatePaymentTokenRequest",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "$ref": "#/components/schemas/CreatePaymentTokenRequest"
               }
             }
           },
@@ -74,144 +214,4180 @@
         },
         "responses": {
           "200": {
-            "description": "plant response",
+            "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Plant"
+                  "$ref": "#/components/schemas/CreatePaymentTokenResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "unexpected error",
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
           },
-          "400": {
-            "description": "unexpected error",
+          "404": {
+            "description": "Not Found: Page not found",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Page not found"
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-      }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
-      "post": {
-        "description": "Information about a new plant added to the store",
-        "requestBody": {
-          "description": "Plant added to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
               }
             }
           }
         },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payment_tokens/provision_request/{provision_token_request_id}": {
+      "get": {
+        "tags": [
+          "Payment Tokens"
+        ],
+        "summary": "Retrieve provision token request",
+        "description": "Check the status of a `create_payment_token` or `update_payment_token` API calls.",
+        "parameters": [
+          {
+            "description": "The ID of a ProvisionTokenRequest returned via create_payment_token",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "provision_token_request_id",
+            "in": "path"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTokenProvisionRequestDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Provision request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Provision request not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
           }
-        }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payment_tokens/{payment_token}": {
+      "get": {
+        "tags": [
+          "Payment Tokens"
+        ],
+        "summary": "Retrieve payment token",
+        "description": "Get data back for a given payment_token.",
+        "parameters": [
+          {
+            "description": "The payment token to get details for",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "payment_token",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payment_tokens/{payment_token}/delete": {
+      "post": {
+        "tags": [
+          "Payment Tokens"
+        ],
+        "summary": "Delete Payment Token",
+        "description": "Invoke this endpoint to invalidate a `payment_token`",
+        "parameters": [
+          {
+            "description": "The payment token to get details for",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "payment_token",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTokenDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payment_tokens/{payment_token}/update": {
+      "post": {
+        "tags": [
+          "Payment Tokens"
+        ],
+        "summary": "Update payment token",
+        "description": "Endpoint allowing your customers to update their payment method(s) and/or requalify after a cart change.",
+        "parameters": [
+          {
+            "description": "The payment token to update",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "payment_token",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Request body for UpdatePaymentTokenRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePaymentTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatePaymentTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/api/v1/qualification_session/{qualification_session_id}": {
+      "get": {
+        "tags": [
+          "Qualification Sessions"
+        ],
+        "summary": "Get qualification session details",
+        "description": "Get the current status and details of a qualification session.\n\n## Request\n\nProvide the `qualification_session_id` in the URL path to retrieve the session details.\n\n## Response Fields\n\n- `qualification_session_id` - The unique identifier for the qualification session\n- `status` - The current status of the qualification session:\n  - `pending` - The user has not yet completed the survey\n  - `processing` - The user has completed the session and it is under review\n  - `approved` - The user has been issued a Letter of Medical Necessity (LMN)\n  - `rejected` - The user is ineligible to receive an LMN for the specified items\n- `expires_at` - The datetime when the Letter of Medical Necessity expires (ISO 8601 format)\n- `user_id` - Optional user identifier provided in the qualification session redirect URL\n- `source` - Optional source identifier provided in the qualification session redirect URL\n\n## Use Cases\n\n- Check if a customer has completed their qualification survey\n- Verify LMN approval status before processing orders\n- Track LMN expiration dates for customer notifications",
+        "parameters": [
+          {
+            "description": "The qualification session ID from the URL path",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "qualification_session_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualificationSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Qualification session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Qualification session not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/api/v1/qualification_sessions": {
+      "get": {
+        "tags": [
+          "Qualification Sessions"
+        ],
+        "summary": "List qualification sessions",
+        "description": "Retrieve a paginated list of all qualification sessions associated with your API key, sorted by creation date.\n\n## Query Parameters\n\n- `user_id` (optional) - Filter by user identifier to find sessions for a specific user\n- `expires_at` (optional) - Filter by LMN expiration date (YYYY-MM-DD format)\n- `status` (optional) - Filter by session status. Can supply multiple statuses separated by commas:\n  - `pending` - User hasn't completed the survey\n  - `processing` - Survey answers are under review\n  - `approved` - User qualified and received an LMN\n  - `rejected` - User did not qualify\n- `page` (optional) - Page number to retrieve (default: 1)\n- `page_size` (optional) - Number of results per page (default: 30, max: 30)\n\n## Response\n\nReturns a paginated list of qualification sessions with the following structure:\n\n### `qualification_sessions` Array\n\nEach session object contains:\n- `qualification_session_id` - Unique identifier for the session\n- `status` - Current status (`pending`, `processing`, `approved`, or `rejected`)\n- `expires_at` - When the Letter of Medical Necessity expires (ISO 8601 format)\n- `user_id` - User identifier from the qualification session redirect URL\n- `source` - Source identifier from the qualification session redirect URL\n\n### `pagination` Object\n\n- `current_page` - The current page number\n- `page_size` - Number of sessions per page (max 30)\n- `count` - Total number of sessions for your API key\n- `last_page` - The last available page number\n\n## Use Cases\n\n- Search for qualification sessions by user ID\n- Find sessions with expiring LMNs to notify customers\n- Monitor pending and processing sessions\n- Audit approved and rejected qualification attempts",
+        "parameters": [
+          {
+            "description": "Optional field indicating which page to access. Defaults to 1.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "integer"
+            },
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "description": "Optional field indicating the number of records per page. Defaults to 30.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "integer"
+            },
+            "name": "page_size",
+            "in": "query"
+          },
+          {
+            "description": "An optional user_id to search for.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "user_id",
+            "in": "query"
+          },
+          {
+            "description": "An optional filter. Will only return supplied status(es). Can supply multiple separated by commas.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "description": "Filter by expiration date (YYYY-MM-DD format)",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "name": "expires_at",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualificationSessionListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Page not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Page not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/create_payment_session": {
+      "post": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Create Payment Session",
+        "description": "To begin the \"Pay with Truemed\" flow, a post request needs to be made to Truemed's create_payment_session endpoint. The create_payment_session endpoint should be called after a user clicks \"Checkout with Truemed\" or similar. The user will be redirected to Truemed to complete the checkout flow, and will be redirected back to the partner site upon successful (or failed) payments via the URLs provided in the request by the partner. The failure or success status is communicated to the partner via a webhook payment_session_complete.",
+        "requestBody": {
+          "description": "Request body for CreatePaymentSessionRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePaymentSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Page not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Page not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/payment_session/{business_id}": {
+      "get": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Get Payment Status",
+        "description": "Get the status of a payment session based on the payment session id.",
+        "parameters": [
+          {
+            "description": "The payment session ID.",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "business_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPaymentStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/payment_session/{business_id}/cancel": {
+      "post": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Cancel Payment Session",
+        "description": "The cancel_payment_session endpoint can be called after create_payment_session has been called, but before the customer has entered their payment information, for either kind=authorization or kind=one_time_payment. The failure or success status is communicated to the partner via a webhook payment_session_complete as before.",
+        "parameters": [
+          {
+            "description": "The payment session ID to cancel.",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "business_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelPaymentSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/payment_session/{business_id}/void": {
+      "post": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Void Session",
+        "description": "The void_payment_session endpoint should be called after create_payment_session has been called with kind of authorization as outlined in Create Payment Session (Manual Capture). The failure or success status is communicated to the partner via a webhook payment_session_complete as before.",
+        "parameters": [
+          {
+            "description": "The UUID of the payment session returned by create_payment_session.",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "business_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Request body for VoidViewRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidViewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoidViewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/payment_sessions": {
+      "get": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "List Payment Sessions",
+        "description": "All payment sessions created with the Create payment session API call can be listed via a call to the list_payment_sessions endpoint, which is simply a GET request to /payments/v1/. By default, all payment sessions, including those that are pending, created as auth holds and those that have been manually voided or captured will be listed.",
+        "parameters": [
+          {
+            "description": "Optional field indicating which page to access. Defaults to 1.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "integer"
+            },
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "description": "Optional field indicating the number of records per page. Defaults to 30.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "integer"
+            },
+            "name": "page_size",
+            "in": "query"
+          },
+          {
+            "description": "Filter out pending payment sessions.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "filter_pending",
+            "in": "query"
+          },
+          {
+            "description": "Filter out voided payment sessions.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "filter_voided",
+            "in": "query"
+          },
+          {
+            "description": "Include metadata field in the response.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_metadata",
+            "in": "query"
+          },
+          {
+            "description": "Include order items in the response.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_order_items",
+            "in": "query"
+          },
+          {
+            "description": "Search by payment session ID, user business ID, email, or name.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions created on or after this date (ISO 8601 format).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "name": "created_on_start",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions created on or before this date (ISO 8601 format).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "name": "created_on_end",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions captured on or after this date (ISO 8601 format).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "name": "captured_on_start",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions captured on or before this date (ISO 8601 format).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "name": "captured_on_end",
+            "in": "query"
+          },
+          {
+            "description": "Include refund details in the response (default: true).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_refunds",
+            "in": "query"
+          },
+          {
+            "description": "Include dispute details in the response (default: true).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_disputes",
+            "in": "query"
+          },
+          {
+            "description": "Filter by payment kind (comma-separated list: one_time_payment, authorization).",
+            "required": false,
+            "deprecated": false,
+            "style": "form",
+            "explode": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "name": "kind",
+            "in": "query"
+          },
+          {
+            "description": "Filter by payment session status (comma-separated list).",
+            "required": false,
+            "deprecated": false,
+            "style": "form",
+            "explode": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "description": "Include refund_amount summary instead of full refund details.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "summarize_refunds",
+            "in": "query"
+          },
+          {
+            "description": "Include TrueMed fee in the response.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_truemed_fee",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions by payment token ID.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "payment_token",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Page not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Page not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/refund": {
+      "post": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Create Refund",
+        "description": "Use this endpoint to refund payments Truemed has already processed on your behalf. Partial refunds are supported.",
+        "requestBody": {
+          "description": "Request body for CreateRefundRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRefundRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRefundResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Page not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Page not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    }
+  },
+  "webhooks": {
+    "paymentsessioncompleted": {
+      "post": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Payment Session Webhooks",
+        "description": "The partner is required to implement an endpoint that Truemed requests to inform the partner of the checkout status.\n\nWe'll call the `payment_session_complete` webhook once each time the `status` of the `payment_session` changes, including sessions that have been canceled, voided, and captured. For delayed capture, we'll issue the webhook call for authorization (when the customer first successfully enters card information), and again after the partner has manually captured funds via the capture api.\n\nIn successful payment cases, we'll first issue a webhook indicating that the `payment_session` has transition from `pending` to `processing`, after which you can expect a webhook transitioning from `processing` to `captured` (in the default / immediate capture cases), and to `authorized` in the case of Manual/Delayed Capture.\n\n**Important**: Orders should not be fulfilled until a webhook is received with a status of `captured`.\n\n**Authentication**: Partners should verify the request comes from Truemed by checking that the API key is present in the `x-truemed-api-key` HTTP header.",
+        "requestBody": {
+          "description": "Webhook payload for paymentsessioncompleted",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusUpdateWebhookPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Webhook received successfully (HTTP 204 No Content)"
+          },
+          "400": {
+            "description": "Invalid payload or authentication failure"
+          },
+          "500": {
+            "description": "Server error processing webhook"
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-webhook": []
+          }
+        ]
+      }
+    },
+    "paymenttokenupdated": {
+      "post": {
+        "tags": [
+          "Payment Tokens"
+        ],
+        "summary": "Payment Token Webhooks",
+        "description": "The partner is required to implement an endpoint that Truemed requests to inform the partner of updates made to payment tokens which back customer subscriptions.\n\nThe `payment_token_updated` webhook is invoked when:\n\n1. A `payment_token` is provisioned using `create_payment_session`\n2. A customer updates their payment token due to one of the failure cases outlined in the subscriptions guide\n3. A `payment_token` is provisioned using `create_payment_token`\n\nThe request body includes the `payment_token`, and one of 3 optional IDs mapping back to the originating entity (`payment_session_id`, `failed_payment_session_id`, or `create_payment_session_id`).\n\nOnce you receive this webhook, the `payment_token` can successfully be used in subsequent calls to `create_payment_session`.\n\n**Authentication**: Partners should verify the request comes from Truemed by checking that the API key is present in the `x-truemed-api-key` HTTP header.",
+        "requestBody": {
+          "description": "Webhook payload for paymenttokenupdated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentTokenUpdatedWebhookPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Webhook received successfully (HTTP 204 No Content)"
+          },
+          "400": {
+            "description": "Invalid payload or authentication failure"
+          },
+          "500": {
+            "description": "Server error processing webhook"
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-webhook": []
+          }
+        ]
+      }
+    },
+    "qualificationstatusupdated": {
+      "post": {
+        "tags": [
+          "Qualification Sessions"
+        ],
+        "summary": "Qualification Session Completed Webhook/Callback",
+        "description": "The partner is required to implement an endpoint that Truemed requests to inform the partner of the `qualification_session` status.\n\nThe `qualification_session_complete` webhook will only be called once for each qualification session, on status change to `approved`, or `rejected`.\n\n**Authentication**: Partners should verify the request comes from Truemed by checking that the API key is present in the `x-truemed-api-key` HTTP header.",
+        "requestBody": {
+          "description": "Webhook payload for qualificationstatusupdated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QualificationSessionStatusUpdatedWebhookPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Webhook received successfully (HTTP 204 No Content)"
+          },
+          "400": {
+            "description": "Invalid payload or authentication failure"
+          },
+          "500": {
+            "description": "Server error processing webhook"
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-webhook": []
+          }
+        ]
       }
     }
   },
   "components": {
     "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
+      "Address": {
         "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
+          "line1": {
+            "type": "string",
+            "title": "Line1",
+            "description": "First line of address"
           },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
+          "city": {
+            "type": "string",
+            "title": "City",
+            "description": "City for address"
           },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "State for address"
+          },
+          "postal_code": {
+            "type": "string",
+            "title": "Postal Code",
+            "description": "Zip code for address"
+          },
+          "line2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
-            }
+            ],
+            "title": "Line2",
+            "description": "Second line of address"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country",
+            "description": "2-letter ISO 3166 for address"
           }
-        ]
+        },
+        "type": "object",
+        "required": [
+          "line1",
+          "city",
+          "state",
+          "postal_code"
+        ],
+        "title": "Address"
       },
-      "Error": {
+      "CancelPaymentSessionResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/PaymentSessionStatus",
+            "description": "The status field of the payment_session."
+          },
+          "order_items": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentSessionOrderItem"
+            },
+            "type": "array",
+            "title": "Order Items",
+            "description": "A list of order items."
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional field echoed back if present in the call to create_payment_session."
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "order_items"
+        ],
+        "title": "CancelPaymentSessionResponse"
+      },
+      "CaptureWebhookPayload": {
+        "properties": {
+          "captured_at": {
+            "type": "string",
+            "title": "Captured At",
+            "description": "ISO-8601 timestamp of when the capture occurred"
+          },
+          "capture_amount": {
+            "type": "integer",
+            "title": "Capture Amount",
+            "description": "The amount captured in cents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "captured_at",
+          "capture_amount"
+        ],
+        "title": "CaptureWebhookPayload"
+      },
+      "CreatePaymentSessionRequest": {
+        "properties": {
+          "total_amount": {
+            "type": "integer",
+            "title": "Total Amount",
+            "description": "The total amount in cents to charge the user, inclusive of discounts, shipping, taxes, and other fees being collected by the partner."
+          },
+          "order_items": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentSessionOrderItem"
+            },
+            "type": "array",
+            "title": "Order Items",
+            "description": "A list of order items."
+          },
+          "success_url": {
+            "type": "string",
+            "title": "Success Url",
+            "description": "Where to redirect the user to after Truemed successfully processes a payment."
+          },
+          "failure_url": {
+            "type": "string",
+            "title": "Failure Url",
+            "description": "When the payment fails in an irrecoverable way, or the user is ineligible to spend HSA/FSA funds on the purchase."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key",
+            "description": "Allows the endpoint to be called multiple times, and must be unique to the checkout session."
+          },
+          "customer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Name",
+            "description": "The first and last name of the customer."
+          },
+          "customer_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Email",
+            "description": "The email address for the customer."
+          },
+          "customer_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer State",
+            "description": "The 2-letter ISO 3166-2:US code for a region, without the US- prefix."
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Will be echoed back in the webhook and detail view if present."
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "One of the following: one_time_payment (DEFAULT), authorization.",
+            "default": "one_time_payment"
+          },
+          "payment_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Token",
+            "description": "The ID returned by Truemed on initial recurring charges (when tokenize=True)."
+          },
+          "tokenize": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tokenize",
+            "description": "True or False - set to True to enable subsequent charges.",
+            "default": false
+          },
+          "use_iframe": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Use Iframe",
+            "description": "Optional query parameter that can be used to modify the response's redirect_url so it can be used and communicated with in an iframe.",
+            "default": false
+          },
+          "amount_details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentSessionAmountDetails"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional amount details including discounts and charges."
+          },
+          "request_multicapture": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Multicapture",
+            "description": "Request multicapture capability for the payment session.",
+            "default": false
+          },
+          "test_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TestConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Test configuration for the payment session."
+          },
+          "display_next_bill_info": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NextBillInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Information about the next bill for free trial sessions."
+          },
+          "billing_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Name",
+            "description": "The billing name for the payment session."
+          },
+          "billing_address": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Address"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The billing address for the payment session."
+          },
+          "shipping_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shipping Name",
+            "description": "The name of the person receiving the order shipment."
+          },
+          "shipping_address": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Address"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The shipping address for the payment session."
+          },
+          "survey_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SurveyConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Allows the partner to customize the health survey."
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_amount",
+          "order_items",
+          "success_url",
+          "failure_url",
+          "idempotency_key"
+        ],
+        "title": "CreatePaymentSessionRequest"
+      },
+      "CreatePaymentSessionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The unique ID for this checkout session."
+          },
+          "redirect_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Url",
+            "description": "The URL that the partner should redirect the customer to."
+          },
+          "payment_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Token",
+            "description": "The payment token for recurring payments."
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Optional message for the response."
+          },
+          "next_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Action",
+            "description": "The next action required for the payment."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "CreatePaymentSessionResponse"
+      },
+      "CreatePaymentTokenRequest": {
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key",
+            "description": "A unique ID that allows safely retrying the request without performing the same operation twice"
+          },
+          "success_url": {
+            "type": "string",
+            "title": "Success Url",
+            "description": "Where Truemed should redirect the customer after successfully completing checkout"
+          },
+          "failure_url": {
+            "type": "string",
+            "title": "Failure Url",
+            "description": "Where Truemed should redirect the customer if they decide to cancel the checkout"
+          },
+          "order_items": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentTokenOrderItemSku"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Order Items",
+            "description": "The initial list of items for this subscription"
+          },
+          "customer_email": {
+            "type": "string",
+            "title": "Customer Email",
+            "description": "The customer's email"
+          },
+          "customer_name": {
+            "type": "string",
+            "title": "Customer Name",
+            "description": "The customer's full name"
+          },
+          "customer_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer State",
+            "description": "Set this to pre-fill the answer to the State of Residence question in the health survey. The 2-letter ISO 3166-2:US code for a region, without the US- prefix",
+            "examples": [
+              "AZ",
+              "CO",
+              "TX"
+            ]
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "A JSON string containing any custom key-value pairs. This string will be returned in the payment_session_complete webhook if provided"
+          },
+          "use_iframe": {
+            "type": "boolean",
+            "title": "Use Iframe",
+            "description": "Set to true to allow the Truemed checkout flow to be surfaced via an iframe",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "idempotency_key",
+          "success_url",
+          "failure_url",
+          "order_items",
+          "customer_email",
+          "customer_name"
+        ],
+        "title": "CreatePaymentTokenRequest"
+      },
+      "CreatePaymentTokenResponse": {
+        "properties": {
+          "provision_token_request_id": {
+            "type": "string",
+            "title": "Provision Token Request Id",
+            "description": "A UUID that represents this creation request"
+          },
+          "redirect_url": {
+            "type": "string",
+            "title": "Redirect Url",
+            "description": "Contains a URI through which the customer can complete the payment token provisioning"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provision_token_request_id",
+          "redirect_url"
+        ],
+        "title": "CreatePaymentTokenResponse"
+      },
+      "CreateRefundRequest": {
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "title": "Payment Id",
+            "description": "The id returned to the partner by Truemed in response to a create_payment_session request."
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount",
+            "description": "The amount you wish to refund in cents. Cannot be greater than the total_amount originally charged."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key",
+            "description": "Allows the endpoint to be called multiple times, and must be unique to the refund request."
+          },
+          "reason": {
+            "$ref": "#/components/schemas/RefundReasons",
+            "description": "Why you are initiating this refund request: customer_request - the customer requested a refund; fraudulent - the payment was fraudulent; duplicate_payment - the user checked out with HSA/FSA multiple times for one purchase."
+          },
+          "item_details": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RefundItemDetails"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Details",
+            "description": "A list of items to be refunded."
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_id",
+          "amount",
+          "idempotency_key",
+          "reason"
+        ],
+        "title": "CreateRefundRequest"
+      },
+      "CreateRefundResponse": {
+        "properties": {
+          "refund_id": {
+            "type": "string",
+            "title": "Refund Id",
+            "description": "The unique ID for this refund. Multiple refunds can be associated with a single payment, in the case of partial refunds."
+          }
+        },
+        "type": "object",
+        "required": [
+          "refund_id"
+        ],
+        "title": "CreateRefundResponse"
+      },
+      "CustomerFacingTransactionStatus": {
+        "type": "string",
+        "enum": [
+          "Incomplete",
+          "Canceled",
+          "Rejected",
+          "Processing",
+          "Authorized",
+          "Voided",
+          "Expired",
+          "Partially Captured",
+          "Captured",
+          "Partially Refunded",
+          "Refunded",
+          "PartiallyDisputed",
+          "Disputed"
+        ],
+        "title": "CustomerFacingTransactionStatus"
+      },
+      "DisputeDetails": {
+        "properties": {
+          "dispute_id": {
+            "type": "string",
+            "title": "Dispute Id",
+            "description": "Unique ID of the dispute."
+          },
+          "status": {
+            "$ref": "#/components/schemas/DisputeStatusPublic",
+            "description": "Status of this dispute. The value will be one of: Lost, Won, Closed, Investigating, Under Review, or Unknown."
+          },
+          "reason": {
+            "$ref": "#/components/schemas/DisputeReason",
+            "description": "Specific reason the dispute was created."
+          },
+          "disputed_on": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Disputed On",
+            "description": "The date that the dispute was created."
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Further details about the state of a dispute."
+          },
+          "resolved_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved On",
+            "description": "The date that the dispute was resolved."
+          },
+          "withdrawn_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withdrawn Amount",
+            "description": "The total amount of money withdrawn based on the ruling.",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "dispute_id",
+          "status",
+          "reason",
+          "disputed_on",
+          "description"
+        ],
+        "title": "DisputeDetails"
+      },
+      "DisputeReason": {
+        "type": "string",
+        "enum": [
+          "bank_cannot_process",
+          "check_returned",
+          "credit_not_processed",
+          "customer_initiated",
+          "debit_not_authorized",
+          "duplicate",
+          "fraudulent",
+          "general",
+          "incorrect_account_details",
+          "insufficient_funds",
+          "product_not_received",
+          "product_unacceptable",
+          "subscription_canceled",
+          "unrecognized"
+        ],
+        "title": "DisputeReason",
+        "description": "The reason for the dispute.\n\nhttps://docs.stripe.com/api/disputes/object#dispute_object-reason"
+      },
+      "DisputeStatusPublic": {
+        "type": "string",
+        "enum": [
+          "Lost",
+          "Won",
+          "Closed",
+          "Investigating",
+          "Under Review",
+          "Unknown"
+        ],
+        "title": "DisputeStatusPublic",
+        "description": "The public facing status for the dispute."
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorType"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
         "required": [
           "error",
           "message"
         ],
-        "type": "object",
+        "title": "ErrorResponse"
+      },
+      "ErrorType": {
+        "type": "string",
+        "enum": [
+          "BadRequest",
+          "Unauthorized",
+          "Forbidden",
+          "NotFound",
+          "MethodNotAllowed",
+          "TooManyRequests",
+          "ServerError",
+          "BadGateway",
+          "ServiceUnavailable",
+          "GatewayTimeout",
+          "RequestValueError",
+          "ValidationError",
+          "TokenExpired",
+          "InvalidToken",
+          "InvalidCredentials",
+          "StripeInvalidRequestError",
+          "StripeRateLimitError",
+          "StripeError",
+          "PaymentMethodNotFoundError",
+          "CustomerIdNotFoundError",
+          "InvalidPaymentId",
+          "IneligibleItemAdded"
+        ],
+        "title": "ErrorType"
+      },
+      "GetPaymentStatusResponse": {
         "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
+          "payment_session_id": {
+            "type": "string",
+            "title": "Payment Session Id",
+            "description": "The id of the payment session."
           },
-          "message": {
-            "type": "string"
+          "status": {
+            "$ref": "#/components/schemas/PaymentSessionStatus",
+            "description": "The status of the initial payment."
+          },
+          "total_amount": {
+            "type": "integer",
+            "title": "Total Amount",
+            "description": "The total amount captured, in cents."
+          },
+          "authorize_amount": {
+            "type": "integer",
+            "title": "Authorize Amount",
+            "description": "The amount the user's card will be authorized for."
+          },
+          "refunds": {
+            "items": {
+              "$ref": "#/components/schemas/RefundDetails"
+            },
+            "type": "array",
+            "title": "Refunds",
+            "description": "A list of refund objects that will be empty if the payment has no associated refunds."
+          },
+          "disputes": {
+            "items": {
+              "$ref": "#/components/schemas/DisputeDetails"
+            },
+            "type": "array",
+            "title": "Disputes",
+            "description": "A list of dispute objects that will be empty if the payment has no associated disputes."
+          },
+          "status_summary": {
+            "$ref": "#/components/schemas/CustomerFacingTransactionStatus",
+            "description": "A summary of the overall payment session."
+          },
+          "is_testing": {
+            "type": "boolean",
+            "title": "Is Testing",
+            "description": "Whether the payment was executed in a test environment."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "The date and time when the payment session was created."
+          },
+          "order_items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentSessionOrderItemDetails"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentSessionOrderItem"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Order Items",
+            "description": "A list of order items."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PurchaseKind",
+            "description": "The type of payment session."
+          },
+          "customer_business_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Business Id",
+            "description": "The business id of the customer."
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "The email of the user who executed the payment."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "The name of the user who executed the payment."
+          },
+          "capture_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Amount",
+            "description": "The amount of funds actually captured."
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional field echoed back if present in the call to create_payment_session."
+          },
+          "stripe_payment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stripe Payment Id",
+            "description": "The Stripe payment id."
+          },
+          "amount_details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentSessionAmountDetails"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Detailed breakdown of the payment amount."
+          },
+          "truemed_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truemed Fee",
+            "description": "The fee that Truemed received from the payment session. Will return 0 until the session has been captured."
           }
-        }
+        },
+        "type": "object",
+        "required": [
+          "payment_session_id",
+          "status",
+          "total_amount",
+          "authorize_amount",
+          "refunds",
+          "disputes",
+          "status_summary",
+          "is_testing",
+          "created_at",
+          "order_items",
+          "kind"
+        ],
+        "title": "GetPaymentStatusResponse"
+      },
+      "NextActionType": {
+        "type": "string",
+        "enum": [
+          "UpdatePaymentMethod",
+          "TakeHealthSurvey",
+          "None"
+        ],
+        "title": "NextActionType"
+      },
+      "NextBillInfo": {
+        "properties": {
+          "total_amount": {
+            "type": "integer",
+            "title": "Total Amount"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_amount",
+          "date"
+        ],
+        "title": "NextBillInfo"
+      },
+      "PaginationBody": {
+        "properties": {
+          "current_page": {
+            "type": "integer",
+            "title": "Current Page",
+            "description": "The page requested. If none was provided, this will default to 1."
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size",
+            "description": "The number of items per page, which is at most 30."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "The total number of items associated with the provided API key."
+          },
+          "last_page": {
+            "type": "integer",
+            "title": "Last Page",
+            "description": "The last page. You can iterate through pages by providing integers up to last_page in the page parameter."
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_page",
+          "page_size",
+          "count",
+          "last_page"
+        ],
+        "title": "PaginationBody"
+      },
+      "PaymentMethodResponse": {
+        "properties": {
+          "last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last4",
+            "description": "The last 4 digits of the CC number associated with this payment method."
+          },
+          "payment_method_updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Method Updated At",
+            "description": "ISO 8601 formatted DateTime object that represents the date and time the `payment_method` was last updated by the customer."
+          },
+          "expiration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiration",
+            "description": "A MM/YYYY formatted string specifying the month and year the card on file will expire."
+          }
+        },
+        "type": "object",
+        "title": "PaymentMethodResponse"
+      },
+      "PaymentSessionAmountDetail": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The name or description of the discount or charge."
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount",
+            "description": "The amount in cents for this discount or charge."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "amount"
+        ],
+        "title": "PaymentSessionAmountDetail"
+      },
+      "PaymentSessionAmountDetails": {
+        "properties": {
+          "total_discounts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Discounts",
+            "description": "The total amount of discounts applied, in cents."
+          },
+          "total_additional_charges": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Additional Charges",
+            "description": "The total amount of additional charges (e.g., shipping, tax), in cents."
+          },
+          "discounts_details": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentSessionAmountDetail"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discounts Details",
+            "description": "An array of individual discount line items with names and amounts."
+          },
+          "additional_charges_details": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentSessionAmountDetail"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Additional Charges Details",
+            "description": "An array of individual additional charge line items with names and amounts."
+          }
+        },
+        "type": "object",
+        "title": "PaymentSessionAmountDetails"
+      },
+      "PaymentSessionDetails": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The UUID returned by create_payment_session."
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentSessionStatus",
+            "description": "Either: pending, processing, captured, authorized, or authorization_voided, or rejected."
+          },
+          "authorize_amount": {
+            "type": "integer",
+            "title": "Authorize Amount",
+            "description": "The total_amount passed into create_payment_session."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PurchaseKind",
+            "description": "The payment kind, either one_time_payment or authorization."
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDetails",
+            "description": "The user attached to the payment session."
+          },
+          "is_testing": {
+            "type": "boolean",
+            "title": "Is Testing",
+            "description": "The testing flag."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key",
+            "description": "The idempotency key passed into create_payment_session."
+          },
+          "refund_count": {
+            "type": "integer",
+            "title": "Refund Count",
+            "description": "The number of refunds made on this payment."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "The date the payment session was created in ISO 8601 format. Example: \"2024-06-13T16:03:07.473Z\"."
+          },
+          "status_summary": {
+            "$ref": "#/components/schemas/CustomerFacingTransactionStatus",
+            "description": "A summary of the overall payment session status."
+          },
+          "capture_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Amount",
+            "description": "For one time payments, same as authorize_amount. Otherwise, the captured amount."
+          },
+          "order_items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentSessionOrderItem"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentSessionOrderItemDetails"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Items",
+            "description": "The list of the current state of the order items passed into create_payment_session if include_order_items is True."
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "The raw metadata field passed into create_payment_session."
+          },
+          "captured_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured On",
+            "description": "The date the payment was captured in ISO 8601 format. Example: \"2024-06-13T16:03:07.473Z\"."
+          },
+          "authorized_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authorized On",
+            "description": "The date the payment was authorized in ISO 8601 format. Example: \"2024-06-13T16:03:07.473Z\". For kind: one_time_payment, this will be the same as captured_on."
+          },
+          "refunds": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RefundDetails"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refunds",
+            "description": "An array of refund objects. Included if include_refunds is True (by default)."
+          },
+          "refund_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Amount",
+            "description": "Only present when summarize_refunds=True is included in the request. The sum of processed refunds for the payment session, in cents."
+          },
+          "disputes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DisputeDetails"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disputes",
+            "description": "An array of dispute objects. Included if include_disputes is True (by default)."
+          },
+          "truemed_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truemed Fee",
+            "description": "Only present when include_trumed_fee=True is included in the request. The fee collected by truemed for this payment session. Will return 0 until the session has been captured."
+          },
+          "stripe_payment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stripe Payment Id",
+            "description": "The Stripe payment ID associated with this payment session."
+          },
+          "amount_details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentSessionAmountDetails"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Detailed breakdown of the payment amount including discounts and charges."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "authorize_amount",
+          "kind",
+          "user",
+          "is_testing",
+          "idempotency_key",
+          "refund_count",
+          "created_at",
+          "status_summary"
+        ],
+        "title": "PaymentSessionDetails"
+      },
+      "PaymentSessionOrderItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The name of the item."
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity",
+            "description": "The number of this item in the cart."
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount",
+            "description": "The total amount for this line item in cents. Either amount or price must be provided."
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price",
+            "description": "The unit price in cents for the item. Either amount or price must be provided."
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id",
+            "description": "A unique identifier for this order item within the payment."
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku",
+            "description": "The SKU (Stock Keeping Unit) for this item."
+          },
+          "amount_details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentSessionAmountDetails"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional itemized discounts and charges for this item."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "quantity"
+        ],
+        "title": "PaymentSessionOrderItem"
+      },
+      "PaymentSessionOrderItemDetails": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The name of the item."
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity",
+            "description": "The number of this item in the cart."
+          },
+          "price": {
+            "type": "integer",
+            "title": "Price",
+            "description": "The unit price in cents charged for the item."
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id",
+            "description": "Optional unique identifier for this item provided by the merchant."
+          },
+          "quantity_capturable": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Capturable",
+            "description": "The quantity of this item that can still be captured (for manual capture authorizations)."
+          },
+          "total_capturable": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Capturable",
+            "description": "The total amount in cents that can still be captured for this item."
+          },
+          "quantity_refundable": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Refundable",
+            "description": "The quantity of this item that can be refunded."
+          },
+          "total_refundable": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Refundable",
+            "description": "The total amount in cents that can be refunded for this item."
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku",
+            "description": "The SKU (Stock Keeping Unit) for this item."
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount",
+            "description": "The total amount for this line item in cents (quantity \u00d7 price)."
+          },
+          "amount_details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentSessionAmountDetails"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Itemized discounts and charges applied to this specific item."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "quantity",
+          "price",
+          "item_id",
+          "quantity_capturable",
+          "total_capturable",
+          "quantity_refundable",
+          "total_refundable",
+          "sku"
+        ],
+        "title": "PaymentSessionOrderItemDetails"
+      },
+      "PaymentSessionResponse": {
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationBody",
+            "description": "A pagination object with information about the current page, page size, total count, and last page."
+          },
+          "payment_sessions": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentSessionDetails"
+            },
+            "type": "array",
+            "title": "Payment Sessions",
+            "description": "List of payment session details."
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_sessions"
+        ],
+        "title": "PaymentSessionResponse"
+      },
+      "PaymentSessionStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "canceled",
+          "processing",
+          "rejected",
+          "authorized",
+          "authorization_expired",
+          "authorization_voided",
+          "partially_captured",
+          "captured"
+        ],
+        "title": "PaymentSessionStatus"
+      },
+      "PaymentTokenDeleteResponse": {
+        "properties": {},
+        "type": "object",
+        "title": "PaymentTokenDeleteResponse"
+      },
+      "PaymentTokenListResponse": {
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationBody",
+            "description": "A pagination object with information about the current page, page size, total count, and last page."
+          },
+          "payment_tokens": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentTokenResponse"
+            },
+            "type": "array",
+            "title": "Payment Tokens",
+            "description": "An array of `payment_token` objects."
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_tokens"
+        ],
+        "title": "PaymentTokenListResponse"
+      },
+      "PaymentTokenOrderItemSku": {
+        "properties": {
+          "sku": {
+            "type": "string",
+            "title": "Sku",
+            "description": "The SKU of the item as configured in your catalog"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku"
+        ],
+        "title": "PaymentTokenOrderItemSku"
+      },
+      "PaymentTokenProvisionRequestDetailResponse": {
+        "properties": {
+          "payment_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Token",
+            "description": "The PaymentToken created as part of create_payment_token for the ProvisionTokenRequest. Will be null if the PaymentToken has not been provisioned yet"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "The metadata string you provided as part of the create_payment_token request for the ProvisionTokenRequest. Will be null if no metadata was provided"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_token",
+          "metadata"
+        ],
+        "title": "PaymentTokenProvisionRequestDetailResponse"
+      },
+      "PaymentTokenResponse": {
+        "properties": {
+          "payment_token": {
+            "type": "string",
+            "title": "Payment Token",
+            "description": "The payment token identifier."
+          },
+          "customer_email": {
+            "type": "string",
+            "title": "Customer Email",
+            "description": "The email address for the customer associated with this `payment_token`."
+          },
+          "customer_name": {
+            "type": "string",
+            "title": "Customer Name",
+            "description": "The first and last name of the customer associated with this `payment_token`."
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO 8601 formatted date and time the `payment_token` was created at."
+          },
+          "payment_methods": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentMethodResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Methods",
+            "description": "An optional array of payment_method objects."
+          },
+          "lmn_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lmn Expires At",
+            "description": "ISO 8601 formatted date when the earliest LMN associated with this payment token expires. Null if no verified LMN exists."
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_token",
+          "customer_email",
+          "customer_name",
+          "created_at"
+        ],
+        "title": "PaymentTokenResponse"
+      },
+      "PaymentTokenUpdatedWebhookPayload": {
+        "properties": {
+          "payment_token": {
+            "type": "string",
+            "title": "Payment Token",
+            "description": "The payment token identifier"
+          },
+          "failed_payment_session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Payment Session Id",
+            "description": "Optional payment session ID that failed, triggering token update"
+          },
+          "payment_session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Session Id",
+            "description": "Optional payment session ID associated with the token update"
+          },
+          "provision_token_request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provision Token Request Id",
+            "description": "Optional provision token request ID"
+          },
+          "payment_methods": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentMethodResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Methods",
+            "description": "Optional list of available payment methods for the token"
+          },
+          "lmn_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lmn Expires At",
+            "description": "Optional ISO-8601 timestamp of when the LMN expires"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional metadata associated with the payment token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_token"
+        ],
+        "title": "PaymentTokenUpdatedWebhookPayload"
+      },
+      "PurchaseKind": {
+        "type": "string",
+        "enum": [
+          "one_time_payment",
+          "authorization"
+        ],
+        "title": "PurchaseKind",
+        "description": "Enum for the kind of payment\n\nThis determines how the payment will be captured\n- OneTimePayment means captured by Truemed automatically\n- Authorization means manually captured by the requesting merchant"
+      },
+      "QualificationSessionListResponse": {
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationBody",
+            "description": "A pagination object with information about the current page, page size, total count, and last page."
+          },
+          "qualification_sessions": {
+            "items": {
+              "$ref": "#/components/schemas/QualificationSessionResponse"
+            },
+            "type": "array",
+            "title": "Qualification Sessions",
+            "description": "An array of qualification_session objects."
+          }
+        },
+        "type": "object",
+        "required": [
+          "qualification_sessions"
+        ],
+        "title": "QualificationSessionListResponse"
+      },
+      "QualificationSessionResponse": {
+        "properties": {
+          "qualification_session_id": {
+            "type": "string",
+            "title": "Qualification Session Id",
+            "description": "The id of the payment session."
+          },
+          "status": {
+            "$ref": "#/components/schemas/QualificationSessionStatusSummary",
+            "description": "The status of the initial payment."
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "The datetime at which the Letter-of-Medical-Necessity expires."
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id",
+            "description": "The user_id provided in the qualification session redirect URL param."
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source",
+            "description": "The source provided in the qualification session redirect URL param."
+          }
+        },
+        "type": "object",
+        "required": [
+          "qualification_session_id",
+          "status"
+        ],
+        "title": "QualificationSessionResponse"
+      },
+      "QualificationSessionStatusSummary": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "processing",
+          "approved",
+          "rejected"
+        ],
+        "title": "QualificationSessionStatusSummary",
+        "description": "This enum is used to summarize the status of the qualification session.\n\nIt abstracts the internal nuances of the qualification session and LMN verification status. It is\nto be used by merchants external to Truemed."
+      },
+      "QualificationSessionStatusUpdatedWebhookPayload": {
+        "properties": {
+          "qualification_session_id": {
+            "type": "string",
+            "title": "Qualification Session Id",
+            "description": "The qualification_session_id returned by Truemed to the partner in create_qualification_session."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "The status of the qualification_session."
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "An optional datetime at which the Letter-of-Medical-Necessity expires."
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id",
+            "description": "An optional user_id, if provided in the redirect."
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source",
+            "description": "An optional source, if provided in the redirect."
+          }
+        },
+        "type": "object",
+        "required": [
+          "qualification_session_id",
+          "status"
+        ],
+        "title": "QualificationSessionStatusUpdatedWebhookPayload"
+      },
+      "RefundDetails": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The UUID of the refund."
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount",
+            "description": "The amount refunded, in cents."
+          },
+          "refunded_on": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Refunded On",
+            "description": "The date the refund was made in ISO 8601 format. Example: \"2024-06-13T16:03:08.386Z\""
+          },
+          "truemed_fee_returned": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truemed Fee Returned",
+            "description": "The amount of TrueMed fees returned with this refund, in cents.",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "amount",
+          "refunded_on"
+        ],
+        "title": "RefundDetails"
+      },
+      "RefundItemDetails": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id",
+            "description": "ID that uniquely identifies the item within the Payment; optionally specified when creating the payment and retrievable from payment session status or list payment sessions."
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity",
+            "description": "The quantity of this particular item to being refunded of this item, up to quantity_refundable from payment session status or list payment sessions."
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "The total amount in cents of this particular item to being refunded of this item, up to total_refundable from payment session status or list payment sessions."
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "quantity",
+          "total"
+        ],
+        "title": "RefundItemDetails"
+      },
+      "RefundReasons": {
+        "type": "string",
+        "enum": [
+          "customer_request",
+          "duplicate_payment",
+          "fraudulent"
+        ],
+        "title": "RefundReasons"
+      },
+      "StatusUpdateWebhookPayload": {
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "title": "Payment Id",
+            "description": "The id returned to the partner by Truemed in response to a create_payment_session request"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentSessionStatus",
+            "description": "The status of the payment from Truemed's perspective. Can be: captured, canceled, pending, processing, rejected, authorized, authorization_voided, authorization_expired"
+          },
+          "authorize_amount": {
+            "type": "integer",
+            "title": "Authorize Amount",
+            "description": "The amount the user's card will be authorized for. In the case of kind=one_time_payment, this will always be the same as capture_amount"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO-8601 timestamp of when the payment session was created"
+          },
+          "captures": {
+            "items": {
+              "$ref": "#/components/schemas/CaptureWebhookPayload"
+            },
+            "type": "array",
+            "title": "Captures",
+            "description": "List of capture details for the payment session"
+          },
+          "capture_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Amount",
+            "description": "The amount of funds actually captured. For payment sessions of kind=one_time_payment this field will always be present and will be the same as authorize_amount. For payment sessions of kind=authorization this field will not be present until the funds have been captured"
+          },
+          "order_items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentSessionOrderItem"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentSessionOrderItemDetails"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Order Items",
+            "description": "A list of order items with fields: item_id, name, price, quantity, sku, total_refundable (optional), quantity_refundable (optional), total_capturable (optional), quantity_capturable (optional)"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional field echoed back if present in the call to create_payment_session"
+          },
+          "payment_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Token",
+            "description": "Optional string indicating the payment_token used for the payment session. This field will be set only if the partner provided tokenize=True or a payment_token in the create_payment_session request"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_id",
+          "status",
+          "authorize_amount",
+          "created_at",
+          "captures",
+          "order_items"
+        ],
+        "title": "StatusUpdateWebhookPayload"
+      },
+      "SurveyConfig": {
+        "properties": {
+          "hide_back_to_checkout_cta": {
+            "type": "boolean",
+            "title": "Hide Back To Checkout Cta",
+            "description": "Provide as true to hide the 'Back to checkout' CTA in the survey if the user fails to qualify."
+          }
+        },
+        "type": "object",
+        "required": [
+          "hide_back_to_checkout_cta"
+        ],
+        "title": "SurveyConfig"
+      },
+      "TestConfig": {
+        "properties": {
+          "bypass_survey": {
+            "type": "boolean",
+            "title": "Bypass Survey",
+            "description": "Bypasses the survey by causing an automatic success.",
+            "default": false
+          },
+          "auto_checkout": {
+            "type": "boolean",
+            "title": "Auto Checkout",
+            "description": "Bypasses checkout by automatically entering payment information such that any HSA/FSA eligible amounts are charged to a fake HSA/FSA card and any ineligible amounts are charged to a fake normal card.",
+            "default": false
+          },
+          "auto_verify_lmn": {
+            "type": "boolean",
+            "title": "Auto Verify Lmn",
+            "description": "Automatically verifies the LMN once the LMN Verification is created.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "TestConfig"
+      },
+      "UpdatePaymentTokenRequest": {
+        "properties": {
+          "update_card_info": {
+            "type": "boolean",
+            "title": "Update Card Info",
+            "description": "Set to true to allow the Truemed checkout flow to update the user's card information",
+            "default": false
+          },
+          "order_items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UpdatedOrderItemsRequest"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Items",
+            "description": "Updated list of items for this subscription"
+          },
+          "use_iframe": {
+            "type": "boolean",
+            "title": "Use Iframe",
+            "description": "If true, the customer should be redirected to the `redirect_url` using an iframe.",
+            "default": false
+          },
+          "success_url": {
+            "type": "string",
+            "title": "Success Url",
+            "description": "Where Truemed should redirect the customer after successfully completing the next action"
+          },
+          "failure_url": {
+            "type": "string",
+            "title": "Failure Url",
+            "description": "Where Truemed should redirect the customer after unsuccessfully completing the next action. In the case of a health survey, this applies to the user clicking the back or cancel buttons on the survey."
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Merchants can use this free-form field to store extra information with the payment token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success_url",
+          "failure_url"
+        ],
+        "title": "UpdatePaymentTokenRequest"
+      },
+      "UpdatePaymentTokenResponse": {
+        "properties": {
+          "next_action": {
+            "$ref": "#/components/schemas/NextActionType",
+            "description": "Next action required for this payment token, if any."
+          },
+          "redirect_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Url",
+            "description": "A URI through which the customer can correct the payment_token."
+          }
+        },
+        "type": "object",
+        "required": [
+          "next_action",
+          "redirect_url"
+        ],
+        "title": "UpdatePaymentTokenResponse"
+      },
+      "UpdatedOrderItemsRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The name of the order item"
+          },
+          "sku": {
+            "type": "string",
+            "title": "Sku",
+            "description": "The SKU of the item"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "sku"
+        ],
+        "title": "UpdatedOrderItemsRequest"
+      },
+      "UserDetails": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "title": "Business Id",
+            "description": "The unique business ID of the user."
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "The email of the user who executed the payment."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The name of the user who executed the payment."
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "email",
+          "name"
+        ],
+        "title": "UserDetails"
+      },
+      "VoidViewRequest": {
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key",
+            "description": "Allows the endpoint to be called multiple times. It must be unique to the void session call."
+          }
+        },
+        "type": "object",
+        "required": [
+          "idempotency_key"
+        ],
+        "title": "VoidViewRequest"
+      },
+      "VoidViewResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The unique ID for this void session. This same ID will be returned if the endpoint is called with the same idempotency_key. Associate this id with your internal representation of a checkout session, if applicable."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "VoidViewResponse"
       }
     },
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+      "truemed-api-key-webhook": {
+        "type": "apiKey",
+        "description": "API key for webhook authentication (sent by Truemed)",
+        "name": "x-truemed-api-key",
+        "in": "header"
+      },
+      "truemed-api-key-rest": {
+        "type": "apiKey",
+        "description": "Sales channel API key for merchant server-to-server authentication",
+        "name": "x-truemed-api-key",
+        "in": "header"
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Payment Sessions",
+      "description": "APIs for creating and managing payment sessions, including authorization, capture, void, and cancellation operations"
+    },
+    {
+      "name": "Payment Tokens",
+      "description": "APIs for creating and managing payment tokens for stored payment methods and subscription billing"
+    },
+    {
+      "name": "Qualification Sessions",
+      "description": "APIs for creating and managing qualification sessions to determine HSA/FSA eligibility"
+    }
+  ]
 }

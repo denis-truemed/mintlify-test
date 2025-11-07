@@ -1,0 +1,57 @@
+---
+title: "Subsequent Billing Periods"
+description: "For subsequent billing periods, paymentsessions can be created via the createpaymentsession endpoint by providing the paymenttoken in the call. The user does..."
+---
+
+For subsequent billing periods, `payment_session`s can be created via the `create_payment_session` endpoint by providing the `payment_token` in the call. The user doesn’t need to be present as their on-file payment method will be charged.
+
+As above, orders should not be fulfilled until the `payment_session_complete` webhook has been received with a `status` of `captured`.
+
+To avoid failures due to payment method expiration or subscription-modifications (such as changing items in the subscription) no longer being eligible, leverage the `update_payment_token` endpoint in a subscription-management user-portal when updating items in the cart. These flows are outlined below.
+
+Failure scenarios should be communicated to the customer via email and addressed as outlined in below. These are best avoided by storing the LMN expiration date and CC expiration dates and prompting the user to update their payment method or take another health survey to re-qualify prior to getting the exception at time of billing.
+
+Failure to Charge[](#failure-to-charge)
+Outside of the user failing to qualify, there are several classes of failures that can occur when creating subsequent changes for a subscription.
+
+1. The user needs to update their card information
+
+expired card
+1. declined card
+1. missing a normal credit card to cover the cost of ineligible items
+
+The user needs to re-qualify, for one of a few reasons:
+
+1. Their existing Letter of Medical Necessity is > 12 months old
+1. The items in their subscription have changes that don't qualify under their existing Letter of Medical Necessity.
+1. Truemed has deemed it necessary for the user to retake the survey for any other reason.
+
+In all cases, Truemed will return a failure type enum indicating and a redirect URL to be provided to the customer via email or shown in a dashboard. The enum allows partners to tune user messaging ("Your card has expired, click here to update" or "You must requalify with Truemed to continue to use your HSA/FSA").
+
+💬
+## Partners can leverage the next_action enum to tune messaging to customers
+
+**More generic failures**
+
+⚠️ Outside of these two, partners may never receive a webhook on the first call `create_payment_session` with `tokenize=True`
+
+1. This indicates the user never completed either the tele-health survey, or did not enter their card info. It can also mean that the user didn't qualify for the items in their cart/subscription based on their answers.
+1. This isn't specific to subscriptions and can happen with any payment session.
+
+## Updating Payment Method
+
+In the case of an expired payment, partners will receive an `HTTP 422` error code when calling `create_payment_session`  and the response body will contain a `next_action: UpdatePaymentMethod` and a `redirect_url` as outlined in the flow below:
+
+![](https://files.readme.io/6a22545dd9ab1c8cfab62332b6b2ed6238e077421b8fd4c95fb5c9e465655e85-image.png)
+
+## Customer needs to re-qualify
+
+Similar to the case above, if the customer needs to re-qualify, partners will receive an `HTTP 422` error code when calling `create_payment_session` and the response body will contain a `next_action: TakeHealthSurvey` and a `redirect_url` as outlined in the flow below:
+
+![](https://files.readme.io/d8f62ff46fdb74233d08a548e0929426ded045ababc712ae745b0cb3f354b4b8-image.png)
+
+## Failure Recovery
+
+Upon the user's correction of the failure cases above, a Payment Token Webhook call will be made to the partner with the `payment_token` used when creating the failing payment session, and a `failed_payment_session_id`.
+
+**At this point, the partner should create a new`payment_session` using the `payment_token` returned in this webhook.** If the partner attempts to create a new `payment_session` with the existing `payment_token` before successfully receiving the webhook, the same error will be returned (indicating the user action is still needed).

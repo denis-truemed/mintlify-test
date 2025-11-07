@@ -1,0 +1,75 @@
+---
+title: "iFrame Payment Session"
+description: "Overview[](overview)
+Payment partners can add a new optional boolean parameter useframe to the endpoint for creating a new payment session Create Payment Ses..."
+---
+
+Overview[](#overview)
+Payment partners can add a new optional boolean parameter `use_frame` to the endpoint for creating a new payment session [Create Payment Session](/reference/create)
+
+Setting `use_iframe` to `true` will return an iframe-compatible URL in the `redirect_url` property of the response.
+
+### Example Request[](#example-request)
+
+JSON`{
+  "use_iframe": true,
+  "total_amount": 0,
+  "order_items": [],
+  "success_url": "https://example.com/success",
+  "failure_url": "https://example.com/failure",
+  "idempotency_key": "key",
+  "customer_email": "[[email protected]](/cdn-cgi/l/email-protection)",
+  "customer_name": "Customer"
+}`
+
+### Example Response[](#example-response)
+
+JSON`{
+  "id": "session_id",
+  "redirect_url": "https://truemed.com/..."
+}
+`
+
+## Handling iFrame Responses
+
+Partner sites can set the iframe element’s `src` to `redirect_url` and this will render Truemed’s survey and checkout in the iframe. A message event listener will need to be added to listen for messages from the iframe. Upon completion of the survey and payment, Truemed will send a message from the iframe to the parent using the browser’s [PostMessage Api](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage)  with two parameters `success` and `redirect_url`. After handling the message, the iframe can be removed.
+
+- success - boolean that returns true if checkout flow was successful on Truemed’s end, false if otherwise
+- redirectUrl - string that will be set to success_url from the original create request body if success is true or failure_url if success is false. Only need to be used if redirect is desired or need to handle success and failure differently.
+
+### Example Handler[](#example-handler)
+
+JavaScript`// Example to handle iFrame checkout
+function openTruemedIframe(redirectUrl) {
+  const iframe = document.createElement('iframe');
+  iframe.id = 'truemed-checkout';
+  iframe.src = redirectUrl;
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
+
+  document.body.appendChild(iframe); // Or append to any desired element
+
+  window.addEventListener('message', function(event) {
+    if (!event.data || typeof(event.data) !== 'object') {
+      // Handle no data or invalid data shape
+      // ...
+      return;
+    }
+
+    const { success, redirectUrl } = event.data;
+    if (success) {
+      // Handle success
+      // ...
+      // or redirect to previously provided success_url     
+      window.location.href = redirectUrl;  // Redirect to success URL
+    } else {
+      // Handle failure
+      // ...
+      // or redirect to previously provided failure_url
+      window.location.href = redirectUrl;  // Redirect to failure URL
+    }
+
+    // Remove the iframe
+    document.body.removeChild(iframe);
+  });
+}`

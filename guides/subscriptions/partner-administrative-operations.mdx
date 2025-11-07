@@ -1,0 +1,32 @@
+---
+title: "Partner Administrative Operations"
+description: "These are operations useful to customer support teams, but may not be functionality exposed to end-users as part of a subscription management dashboard."
+---
+
+These are operations useful to customer support teams, but may not be functionality exposed to end-users as part of a subscription management dashboard.
+
+## View Active Subscriptions
+
+Partners can use this endpoint to reconcile subscription state between their system and Truemed, help support agents review or manage subscription issues, or show active subscriptions in a user’s **“My Subscriptions”** dashboard.
+
+The [`list_payment_token`](/reference/list-payment-tokens) endpoint provides `payment_token`s for all customers associated with the partner’s account.
+
+This endpoints allow tokens to be filtered by
+
+- email
+- A range of tokens using created created_at range
+- lmn_expiration
+- card_expiration
+
+## **Monitor Expiration Dates**
+
+Truemed recommends a recurring background job filter for expirations occurring within the next 30 days and emailing customers to update their payment method or retake the survey.
+
+## **Cancel or Terminate a Subscription**
+
+Using the `delete_payment_token` permanently cancels a `payment_token`. This disables future charges — any attempt to use the token with `create_payment_session` will return a `NotFound` error.
+
+NOTE:
+
+- Deletion is irreversible — tokens cannot be reactivated.
+- To support pause/resume flows or grace periods, manage that logic internally and delete the token only when final.

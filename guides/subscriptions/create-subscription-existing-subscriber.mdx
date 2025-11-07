@@ -1,0 +1,37 @@
+---
+title: "Create a Subscription (Existing Subscriber)"
+description: "To enable an existing subscriber to qualify and store their payment method with Truemed,  partner backends should create a paymenttoken and redirect the cust..."
+---
+
+To enable an existing subscriber to qualify and store their payment method with Truemed,  partner backends should create a `payment_token` and redirect the customer to Truemed’s qualification flow via the `redirect_url` included in the response to [`create_payment_token`](/reference/create-payment-token). **The customer needs to be present during the flow to store their payment method for future use.**
+
+The order of operations are as follows:
+
+1. Create a payment_token: Call create_payment_token to begin the process of provisioning a token that can be used for subsequent charges via the create_payment_session endpoint.
+
+- In the request, an optional metadata string can be provided to track/reference this session later (e.g. customer ID, subscription plan, etc.). Metadata provided on creation will be echoed back via the payment_token_callback, and is available via the retrieve_provision_token_request endpoint.
+1. Redirect the user to the provided redirect_url and store the provision_token_request_id which can be used to determine the status of the payment_token being provisioned.
+
+- NOTE: There is no need to poll for the status via our retrieve_provision_token_request endpoint as the status will be communicated via the payment_token_callback.
+- The full response in case of success contains the following:
+
+HTTP Status Code: 200
+- A provision_token_request_id, a unique identifier for the subscription setup request.
+
+This ID should be associated with your internal notion of user, so you can refer back to it later when a payment_token is provisioned.
+1. A redirect_url. Send the customer to this URL to initiate Truemed’s HSA/FSA eligibility survey and payment set up. The user will return to the success_url you provided once checkout is complete
+1. In the case of failure, Truemed will provide an error enum and a message outlining the error — these are particularly useful during development.
+1. User completes the Truemed survey and stores payment details
+1. User is redirected back to the success_url provided in the call to create_payment_token
+
+NOTE: The user will only be redirected to the failure_url provided if they click “Cancel” while on the Truemed survey or checkout pages.
+1. The user should be shown a “Thank You” "Payment Method Stored Successfully"
+
+IMPORTANT: Note that it is possible a token is never provisioned, partners must wait for the payment_token_callback containing a valid token.
+
+At this point, the user is no longer present and has been told their payment method has been stored successfully. The following webhooks will be issued asynchronously:
+
+- payment_token_callback
+
+This will include the payment_token and also the provision_token_request_id that was returned in Step (1) above. Partners should use this data to associate with the end-customer in partner subscription-management systems.
+- WARNING: In the rare case that the user successfully completes the survey, but a Letter-of-Medical-Necessity is not issued, this webhook will never be issued as a valid payment_token was never successfully provisioned.

@@ -1,0 +1,45 @@
+---
+title: "Create a Subscription (New Subscriber)"
+description: "To implement subscriptions with Truemed's paymenttoken API, partner backends should create a paymenttoken and redirect the customer to Truemed’s checkout flo..."
+---
+
+To implement subscriptions with Truemed's `payment_token` API, partner backends should create a `payment_token` and redirect the customer to Truemed’s checkout flow via the `redirect_url` included in the response to [`create_payment_session`](/reference/create). **The customer needs to be present during the flow to store their payment method for future use.**
+
+🆓
+## Free trials are enabled by setting total_amount to 0 and providing display_next_bill_info when tokenize=True (see the create_payment_session API reference for more detailed field information.)
+
+The order of operations are as follows:
+
+1. Create a payment_token: Call create_payment_session to begin the process of provisioning a token that can be used for subsequent charges.
+
+- In the request, an optional metadata string can be provided to track/reference this session later (e.g. customer ID, subscription plan, etc.). Metadata provided on creation will be echoed back via the payment_token_callback as well as the payment_session_callback.
+- If the payment_token is created as part of a free trial (e.g. total_amount=0 and display_next_bill_info are provided in the API call to create_payment_session), the resultingpayment_session_id should be stored and only subsequently fulfilled upon receipt of the payment_session_complete webhook as called out in the guide for Payment Sessions.
+- In the case of failure, Truemed will provide an error enum and a message outlining the error — these are particularly useful during development.
+1. User completes the Truemed survey and stores payment details
+
+- In the case of free trials, users will be shown information about the next bill amount and next bill date as provided in the display_next_bill_info.total_amount and display_next_bill_info.date fields when entering their payment information.
+- Regardless of if free trials are being used, the user will be shown information about the items they are subscribing to as described in the call to create_payment_session .
+1. User is redirected back to the success_url provided in the call to create_payment_token
+
+- NOTE: The user will only be redirected to the failure_url provided if they click “Cancel” while on the Truemed survey or checkout pages.
+- The user should be shown a “Thank You” or order confirmation page
+
+IMPORTANT: DO NOT create fulfillment requests to process or ship orders/free-trials until a payment_session_complete webhook with a status of captured is received.
+
+At this point, the user is no longer present and has been told their subscription has been placed successfully. The following webhooks will be issued asynchronously:
+
+- payment_session_callback
+
+This webhook will be called multiple times to indicate that the payment_session has been paid-for (or payment has been successfully stored in the case of free-trials), but shouldn’t be fulfilled until the webhook indicates a status of captured.
+- The full lifecycle of a payment_session (and possible failure scenarios) are outlined in our Payments Overview guide.
+- WARNING: In the rare case that the user successfully completes the survey, but a Letter-of-Medical-Necessity is not issued, the payment_session will be moved to a rejected state and the end-customer should be notified that the order will not be fulfilled. The webhook will still be issued with the status field set to rejected.
+- NOTE: This guide doesn’t outline the status change flow for manual/delayed capture, as that is covered elsewhere. The core requirement remains the same in either case: orders must not be fulfilled until receiving a webhook with status=captured.
+
+`payment_token_callback`
+
+- This webhook payload will contain the payment_token and also  a reference to the payment_session_id that was returned in Step (1) above. Thepayment_session_id should be stored and associated with the end-customer in partner subscription-management systems.
+- As outlined above, there are rare cases in which a Letter-of-Medical-Necessity (LMN) is not issued, in which case this webhook will never be issued as a valid payment_token was never successfully provisioned.
+
+This flow is outlined in the diagram below:
+
+![](https://files.readme.io/a95c795f3458fdcb55d00039da5c899d125ed8dc891daa6520db581f7abd7060-image.png)
