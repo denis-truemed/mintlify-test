@@ -1,6 +1,5 @@
 ---
 title: "Create a Subscription (New Subscriber)"
-description: "To implement subscriptions with Truemed's paymenttoken API, partner backends should create a paymenttoken and redirect the customer to Truemed’s checkout flo..."
 ---
 
 To implement subscriptions with Truemed's `payment_token` API, partner backends should create a `payment_token` and redirect the customer to Truemed’s checkout flow via the `redirect_url` included in the response to [`create_payment_session`](/reference/create). **The customer needs to be present during the flow to store their payment method for future use.**

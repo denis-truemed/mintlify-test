@@ -1,6 +1,5 @@
 ---
 title: "Create a Subscription (Existing Subscriber)"
-description: "To enable an existing subscriber to qualify and store their payment method with Truemed,  partner backends should create a paymenttoken and redirect the cust..."
 ---
 
 To enable an existing subscriber to qualify and store their payment method with Truemed,  partner backends should create a `payment_token` and redirect the customer to Truemed’s qualification flow via the `redirect_url` included in the response to [`create_payment_token`](/reference/create-payment-token). **The customer needs to be present during the flow to store their payment method for future use.**
