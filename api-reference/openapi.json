@@ -28,6 +28,889 @@
     }
   ],
   "paths": {
+    "/payments/v1/create_payment_session": {
+      "post": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Create Payment Session",
+        "description": "To begin the \"Pay with Truemed\" flow, a post request needs to be made to Truemed's create_payment_session endpoint. The create_payment_session endpoint should be called after a user clicks \"Checkout with Truemed\" or similar. The user will be redirected to Truemed to complete the checkout flow, and will be redirected back to the partner site upon successful (or failed) payments via the URLs provided in the request by the partner. The failure or success status is communicated to the partner via a webhook payment_session_complete.",
+        "requestBody": {
+          "description": "Request body for CreatePaymentSessionRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePaymentSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Page not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Page not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/payment_session/{business_id}": {
+      "get": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Get Payment Status",
+        "description": "Get the status of a payment session based on the payment session id.",
+        "parameters": [
+          {
+            "description": "The payment session ID.",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "business_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPaymentStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/payment_session/{business_id}/cancel": {
+      "post": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Cancel Payment Session",
+        "description": "The cancel_payment_session endpoint can be called after create_payment_session has been called, but before the customer has entered their payment information, for either kind=authorization or kind=one_time_payment. The failure or success status is communicated to the partner via a webhook payment_session_complete as before.",
+        "parameters": [
+          {
+            "description": "The payment session ID to cancel.",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "business_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelPaymentSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/payment_session/{business_id}/void": {
+      "post": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Void Session",
+        "description": "The void_payment_session endpoint should be called after create_payment_session has been called with kind of authorization as outlined in Create Payment Session (Manual Capture). The failure or success status is communicated to the partner via a webhook payment_session_complete as before.",
+        "parameters": [
+          {
+            "description": "The UUID of the payment session returned by create_payment_session.",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "business_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Request body for VoidViewRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidViewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoidViewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/payment_sessions": {
+      "get": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "List Payment Sessions",
+        "description": "All payment sessions created with the Create payment session API call can be listed via a call to the list_payment_sessions endpoint, which is simply a GET request to /payments/v1/. By default, all payment sessions, including those that are pending, created as auth holds and those that have been manually voided or captured will be listed.",
+        "parameters": [
+          {
+            "description": "Optional field indicating which page to access. Defaults to 1.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "integer"
+            },
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "description": "Optional field indicating the number of records per page. Defaults to 30.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "integer"
+            },
+            "name": "page_size",
+            "in": "query"
+          },
+          {
+            "description": "Filter out pending payment sessions.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "filter_pending",
+            "in": "query"
+          },
+          {
+            "description": "Filter out voided payment sessions.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "filter_voided",
+            "in": "query"
+          },
+          {
+            "description": "Include metadata field in the response.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_metadata",
+            "in": "query"
+          },
+          {
+            "description": "Include order items in the response.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_order_items",
+            "in": "query"
+          },
+          {
+            "description": "Search by payment session ID, user business ID, email, or name.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions created on or after this date (ISO 8601 format).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "name": "created_on_start",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions created on or before this date (ISO 8601 format).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "name": "created_on_end",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions captured on or after this date (ISO 8601 format).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "name": "captured_on_start",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions captured on or before this date (ISO 8601 format).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "name": "captured_on_end",
+            "in": "query"
+          },
+          {
+            "description": "Include refund details in the response (default: true).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_refunds",
+            "in": "query"
+          },
+          {
+            "description": "Include dispute details in the response (default: true).",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_disputes",
+            "in": "query"
+          },
+          {
+            "description": "Filter by payment kind (comma-separated list: one_time_payment, authorization).",
+            "required": false,
+            "deprecated": false,
+            "style": "form",
+            "explode": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "name": "kind",
+            "in": "query"
+          },
+          {
+            "description": "Filter by payment session status (comma-separated list).",
+            "required": false,
+            "deprecated": false,
+            "style": "form",
+            "explode": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "description": "Include refund_amount summary instead of full refund details.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "summarize_refunds",
+            "in": "query"
+          },
+          {
+            "description": "Include TrueMed fee in the response.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "include_truemed_fee",
+            "in": "query"
+          },
+          {
+            "description": "Filter payment sessions by payment token ID.",
+            "required": false,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            },
+            "name": "payment_token",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Page not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Page not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
+    "/payments/v1/refund": {
+      "post": {
+        "tags": [
+          "Payment Sessions"
+        ],
+        "summary": "Create Refund",
+        "description": "Use this endpoint to refund payments Truemed has already processed on your behalf. Partial refunds are supported.",
+        "requestBody": {
+          "description": "Request body for CreateRefundRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRefundRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRefundResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validationerror": {
+                    "summary": "ValidationError example",
+                    "value": {
+                      "error": "ValidationError",
+                      "message": "Bad Request"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found: Page not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "notfound": {
+                    "summary": "NotFound example",
+                    "value": {
+                      "error": "NotFound",
+                      "message": "Page not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "methodnotallowed": {
+                    "summary": "MethodNotAllowed example",
+                    "value": {
+                      "error": "MethodNotAllowed",
+                      "message": "Method not allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "servererror": {
+                    "summary": "ServerError example",
+                    "value": {
+                      "error": "ServerError",
+                      "message": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "truemed-api-key-rest": []
+          }
+        ]
+      }
+    },
     "/api/v1/payment_tokens": {
       "get": {
         "tags": [
@@ -961,889 +1844,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QualificationSessionListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "validationerror": {
-                    "summary": "ValidationError example",
-                    "value": {
-                      "error": "ValidationError",
-                      "message": "Bad Request"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found: Page not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "notfound": {
-                    "summary": "NotFound example",
-                    "value": {
-                      "error": "NotFound",
-                      "message": "Page not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Method Not Allowed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "methodnotallowed": {
-                    "summary": "MethodNotAllowed example",
-                    "value": {
-                      "error": "MethodNotAllowed",
-                      "message": "Method not allowed"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "servererror": {
-                    "summary": "ServerError example",
-                    "value": {
-                      "error": "ServerError",
-                      "message": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "deprecated": false,
-        "security": [
-          {
-            "truemed-api-key-rest": []
-          }
-        ]
-      }
-    },
-    "/payments/v1/create_payment_session": {
-      "post": {
-        "tags": [
-          "Payment Sessions"
-        ],
-        "summary": "Create Payment Session",
-        "description": "To begin the \"Pay with Truemed\" flow, a post request needs to be made to Truemed's create_payment_session endpoint. The create_payment_session endpoint should be called after a user clicks \"Checkout with Truemed\" or similar. The user will be redirected to Truemed to complete the checkout flow, and will be redirected back to the partner site upon successful (or failed) payments via the URLs provided in the request by the partner. The failure or success status is communicated to the partner via a webhook payment_session_complete.",
-        "requestBody": {
-          "description": "Request body for CreatePaymentSessionRequest",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePaymentSessionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatePaymentSessionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "validationerror": {
-                    "summary": "ValidationError example",
-                    "value": {
-                      "error": "ValidationError",
-                      "message": "Bad Request"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found: Page not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "notfound": {
-                    "summary": "NotFound example",
-                    "value": {
-                      "error": "NotFound",
-                      "message": "Page not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Method Not Allowed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "methodnotallowed": {
-                    "summary": "MethodNotAllowed example",
-                    "value": {
-                      "error": "MethodNotAllowed",
-                      "message": "Method not allowed"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "servererror": {
-                    "summary": "ServerError example",
-                    "value": {
-                      "error": "ServerError",
-                      "message": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "deprecated": false,
-        "security": [
-          {
-            "truemed-api-key-rest": []
-          }
-        ]
-      }
-    },
-    "/payments/v1/payment_session/{business_id}": {
-      "get": {
-        "tags": [
-          "Payment Sessions"
-        ],
-        "summary": "Get Payment Status",
-        "description": "Get the status of a payment session based on the payment session id.",
-        "parameters": [
-          {
-            "description": "The payment session ID.",
-            "required": true,
-            "deprecated": false,
-            "schema": {
-              "type": "string"
-            },
-            "name": "business_id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetPaymentStatusResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "validationerror": {
-                    "summary": "ValidationError example",
-                    "value": {
-                      "error": "ValidationError",
-                      "message": "Bad Request"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found: Resource not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "notfound": {
-                    "summary": "NotFound example",
-                    "value": {
-                      "error": "NotFound",
-                      "message": "Resource not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Method Not Allowed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "methodnotallowed": {
-                    "summary": "MethodNotAllowed example",
-                    "value": {
-                      "error": "MethodNotAllowed",
-                      "message": "Method not allowed"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "servererror": {
-                    "summary": "ServerError example",
-                    "value": {
-                      "error": "ServerError",
-                      "message": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "deprecated": false,
-        "security": [
-          {
-            "truemed-api-key-rest": []
-          }
-        ]
-      }
-    },
-    "/payments/v1/payment_session/{business_id}/cancel": {
-      "post": {
-        "tags": [
-          "Payment Sessions"
-        ],
-        "summary": "Cancel Payment Session",
-        "description": "The cancel_payment_session endpoint can be called after create_payment_session has been called, but before the customer has entered their payment information, for either kind=authorization or kind=one_time_payment. The failure or success status is communicated to the partner via a webhook payment_session_complete as before.",
-        "parameters": [
-          {
-            "description": "The payment session ID to cancel.",
-            "required": true,
-            "deprecated": false,
-            "schema": {
-              "type": "string"
-            },
-            "name": "business_id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CancelPaymentSessionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "validationerror": {
-                    "summary": "ValidationError example",
-                    "value": {
-                      "error": "ValidationError",
-                      "message": "Bad Request"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found: Resource not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "notfound": {
-                    "summary": "NotFound example",
-                    "value": {
-                      "error": "NotFound",
-                      "message": "Resource not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Method Not Allowed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "methodnotallowed": {
-                    "summary": "MethodNotAllowed example",
-                    "value": {
-                      "error": "MethodNotAllowed",
-                      "message": "Method not allowed"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "servererror": {
-                    "summary": "ServerError example",
-                    "value": {
-                      "error": "ServerError",
-                      "message": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "deprecated": false,
-        "security": [
-          {
-            "truemed-api-key-rest": []
-          }
-        ]
-      }
-    },
-    "/payments/v1/payment_session/{business_id}/void": {
-      "post": {
-        "tags": [
-          "Payment Sessions"
-        ],
-        "summary": "Void Session",
-        "description": "The void_payment_session endpoint should be called after create_payment_session has been called with kind of authorization as outlined in Create Payment Session (Manual Capture). The failure or success status is communicated to the partner via a webhook payment_session_complete as before.",
-        "parameters": [
-          {
-            "description": "The UUID of the payment session returned by create_payment_session.",
-            "required": true,
-            "deprecated": false,
-            "schema": {
-              "type": "string"
-            },
-            "name": "business_id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "description": "Request body for VoidViewRequest",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VoidViewRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VoidViewResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "validationerror": {
-                    "summary": "ValidationError example",
-                    "value": {
-                      "error": "ValidationError",
-                      "message": "Bad Request"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found: Resource not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "notfound": {
-                    "summary": "NotFound example",
-                    "value": {
-                      "error": "NotFound",
-                      "message": "Resource not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Method Not Allowed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "methodnotallowed": {
-                    "summary": "MethodNotAllowed example",
-                    "value": {
-                      "error": "MethodNotAllowed",
-                      "message": "Method not allowed"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "servererror": {
-                    "summary": "ServerError example",
-                    "value": {
-                      "error": "ServerError",
-                      "message": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "deprecated": false,
-        "security": [
-          {
-            "truemed-api-key-rest": []
-          }
-        ]
-      }
-    },
-    "/payments/v1/payment_sessions": {
-      "get": {
-        "tags": [
-          "Payment Sessions"
-        ],
-        "summary": "List Payment Sessions",
-        "description": "All payment sessions created with the Create payment session API call can be listed via a call to the list_payment_sessions endpoint, which is simply a GET request to /payments/v1/. By default, all payment sessions, including those that are pending, created as auth holds and those that have been manually voided or captured will be listed.",
-        "parameters": [
-          {
-            "description": "Optional field indicating which page to access. Defaults to 1.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "integer"
-            },
-            "name": "page",
-            "in": "query"
-          },
-          {
-            "description": "Optional field indicating the number of records per page. Defaults to 30.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "integer"
-            },
-            "name": "page_size",
-            "in": "query"
-          },
-          {
-            "description": "Filter out pending payment sessions.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "name": "filter_pending",
-            "in": "query"
-          },
-          {
-            "description": "Filter out voided payment sessions.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "name": "filter_voided",
-            "in": "query"
-          },
-          {
-            "description": "Include metadata field in the response.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "name": "include_metadata",
-            "in": "query"
-          },
-          {
-            "description": "Include order items in the response.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "name": "include_order_items",
-            "in": "query"
-          },
-          {
-            "description": "Search by payment session ID, user business ID, email, or name.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "string"
-            },
-            "name": "search",
-            "in": "query"
-          },
-          {
-            "description": "Filter payment sessions created on or after this date (ISO 8601 format).",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "name": "created_on_start",
-            "in": "query"
-          },
-          {
-            "description": "Filter payment sessions created on or before this date (ISO 8601 format).",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "name": "created_on_end",
-            "in": "query"
-          },
-          {
-            "description": "Filter payment sessions captured on or after this date (ISO 8601 format).",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "name": "captured_on_start",
-            "in": "query"
-          },
-          {
-            "description": "Filter payment sessions captured on or before this date (ISO 8601 format).",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "name": "captured_on_end",
-            "in": "query"
-          },
-          {
-            "description": "Include refund details in the response (default: true).",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "name": "include_refunds",
-            "in": "query"
-          },
-          {
-            "description": "Include dispute details in the response (default: true).",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "name": "include_disputes",
-            "in": "query"
-          },
-          {
-            "description": "Filter by payment kind (comma-separated list: one_time_payment, authorization).",
-            "required": false,
-            "deprecated": false,
-            "style": "form",
-            "explode": false,
-            "schema": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "name": "kind",
-            "in": "query"
-          },
-          {
-            "description": "Filter by payment session status (comma-separated list).",
-            "required": false,
-            "deprecated": false,
-            "style": "form",
-            "explode": false,
-            "schema": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "name": "status",
-            "in": "query"
-          },
-          {
-            "description": "Include refund_amount summary instead of full refund details.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "name": "summarize_refunds",
-            "in": "query"
-          },
-          {
-            "description": "Include TrueMed fee in the response.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "boolean"
-            },
-            "name": "include_truemed_fee",
-            "in": "query"
-          },
-          {
-            "description": "Filter payment sessions by payment token ID.",
-            "required": false,
-            "deprecated": false,
-            "schema": {
-              "type": "string"
-            },
-            "name": "payment_token",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentSessionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "validationerror": {
-                    "summary": "ValidationError example",
-                    "value": {
-                      "error": "ValidationError",
-                      "message": "Bad Request"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found: Page not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "notfound": {
-                    "summary": "NotFound example",
-                    "value": {
-                      "error": "NotFound",
-                      "message": "Page not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "405": {
-            "description": "Method Not Allowed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "methodnotallowed": {
-                    "summary": "MethodNotAllowed example",
-                    "value": {
-                      "error": "MethodNotAllowed",
-                      "message": "Method not allowed"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "servererror": {
-                    "summary": "ServerError example",
-                    "value": {
-                      "error": "ServerError",
-                      "message": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "deprecated": false,
-        "security": [
-          {
-            "truemed-api-key-rest": []
-          }
-        ]
-      }
-    },
-    "/payments/v1/refund": {
-      "post": {
-        "tags": [
-          "Payment Sessions"
-        ],
-        "summary": "Create Refund",
-        "description": "Use this endpoint to refund payments Truemed has already processed on your behalf. Partial refunds are supported.",
-        "requestBody": {
-          "description": "Request body for CreateRefundRequest",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateRefundRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateRefundResponse"
                 }
               }
             }
