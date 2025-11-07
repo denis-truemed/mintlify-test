@@ -2,8 +2,8 @@
 title: "Overview"
 ---
 
-Truemed's APIs can be leveraged to enable partner-managed recurring billing (subscriptions) through our payment_token product. Partners can offer Truemed as an option for existing subscribers as well as enabling stored-payment-method like functionality for new customers. In either case, partners are notified via the payment_token_callback webhook when the payment_token can be used to create subsequent payment_sessions.
+Truemed's APIs can be leveraged to enable partner-managed recurring billing (subscriptions) through our `payment_token` product. Partners can offer Truemed as an option for existing subscribers as well as enabling stored-payment-method like functionality for new customers. In either case, partners are notified via the `payment_token_callback` webhook when the `payment_token` can be used to create subsequent `payment_session`s.
 
-For new customers, use create_payment_session with tokenize=True to provision a payment_token. With this approach, the payment processing for the initial order and token provisioning are started with the same call. In addition to the payment_token_callback webhook mentioned above, a separate payment_session_complete webhook will be sent indicating that the first order indicating that the initial order can be fulfilled.
+For new customers, use `create_payment_session` with `tokenize=True` to provision a `payment_token`. With this approach, the payment processing for the initial order and token provisioning are started with the same call. In addition to the `payment_token_callback` webhook mentioned above, a separate `payment_session_complete` webhook will be sent indicating that the first order indicating that the initial order can be fulfilled.
 
-For existing customers, call create_payment_token with information about the items already subscribed to. Partners will be notified via the payment_token_callback webhook when the payment_token can be used to create subsequent payment_session's.
+For existing customers, call `create_payment_token` with information about the items already subscribed to. Partners will be notified via the `payment_token_callback` webhook when the `payment_token` can be used to create subsequent `payment_session`'s.
