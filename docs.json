@@ -36,7 +36,18 @@
       },
       {
         "tab": "API reference",
-        "openapi": "api-reference/openapi.json"
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "api-reference/introduction"
+            ]
+          },
+          {
+            "group": "API Endpoints",
+            "openapi": "api-reference/openapi.json"
+          }
+        ]
       }
     ],
     "global": {
