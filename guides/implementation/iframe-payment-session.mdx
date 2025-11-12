@@ -2,12 +2,11 @@
 title: "iFrame Payment Session"
 ---
 
-Overview[](#overview)
-Payment partners can add a new optional boolean parameter `use_frame` to the endpoint for creating a new payment session [Create Payment Session](/reference/create)
+Overview Payment partners can add a new optional boolean parameter `use_frame` to the endpoint for creating a new payment session [Create Payment Session](/reference/create)
 
-Setting `use_iframe` to `true` will return an iframe-compatible URL in the `redirect_url` property of the response.
+Setting `use_iframe` to `true` will return an iframe-compatible URL in the `redirect_url` property of the 
 
-### Example Request[](#example-request)
+### Example Request
 
 ```json
 {
@@ -22,7 +21,7 @@ Setting `use_iframe` to `true` will return an iframe-compatible URL in the `redi
 }
 ```
 
-### Example Response[](#example-response)
+### Example Response
 
 ```json
 {
@@ -38,7 +37,7 @@ Partner sites can set the iframe element's `src` to `redirect_url` and this will
 - success - boolean that returns true if checkout flow was successful on Truemed's end, false if otherwise
 - redirectUrl - string that will be set to success_url from the original create request body if success is true or failure_url if success is false. Only need to be used if redirect is desired or need to handle success and failure differently.
 
-### Example Handler[](#example-handler)
+### Example Handler
 
 ```javascript
 // Example to handle iFrame checkout
